@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Yasmineli · TikTok Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#111118; --card:#16161f; --border:#1e1e2e;
+  --tt:#fe2c55; --tt2:#25f4ee; --success:#00e5a0; --warn:#ffb547;
+  --text:#f0f0f8; --muted:#6b6b8a;
+  --font:'DM Sans',system-ui,sans-serif; --mono:'Space Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex}
+
+/* BG */
+body::before{content:'';position:fixed;top:-40%;left:-10%;width:50%;height:90%;
+  background:radial-gradient(ellipse,rgba(254,44,85,.07) 0%,transparent 70%);
+  pointer-events:none;z-index:0;animation:bp 8s ease-in-out infinite}
+body::after{content:'';position:fixed;bottom:-20%;right:-10%;width:50%;height:80%;
+  background:radial-gradient(ellipse,rgba(37,244,238,.05) 0%,transparent 70%);
+  pointer-events:none;z-index:0;animation:bp 10s ease-in-out infinite reverse}
+@keyframes bp{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* SIDEBAR */
+#sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;height:100vh;position:relative;z-index:10;overflow-y:auto}
+.logo{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--tt),var(--tt2));
+  border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;
+  box-shadow:0 0 18px rgba(254,44,85,.4);flex-shrink:0}
+.logo-name{font-size:14px;font-weight:700}.logo-sub{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.nav{padding:12px 10px;flex:1}
+.nav-sec{font-size:9px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;
+  letter-spacing:1px;padding:8px 8px 3px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;
+  font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);transition:all .2s;margin-bottom:1px}
+.nav-item:hover{background:var(--card);color:var(--text)}
+.nav-item.active{background:rgba(254,44,85,.12);color:var(--tt)}
+.nav-item .ni{font-size:15px;width:18px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--tt);color:#fff;font-size:9px;font-weight:700;
+  padding:1px 5px;border-radius:20px}
+.nav-badge.teal{background:var(--tt2);color:#000}
+.sidebar-foot{padding:14px;border-top:1px solid var(--border)}
+.tt-btn{width:100%;background:linear-gradient(135deg,var(--tt),#ff6b35);border:none;
+  border-radius:9px;color:#fff;font-size:12px;font-weight:600;padding:9px;
+  cursor:pointer;display:flex;align-items:center;gap:7px;justify-content:center;
+  box-shadow:0 4px 18px rgba(254,44,85,.35);transition:all .2s;font-family:var(--font)}
+.tt-btn:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(254,44,85,.5)}
+.tt-btn.connected{background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);
+  color:var(--success);box-shadow:none;cursor:default}
+.tt-btn.connected:hover{transform:none}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;position:relative;z-index:1}
+.topbar{padding:18px 24px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);flex-shrink:0}
+.topbar h1{font-size:20px;font-weight:700}
+.topbar p{font-size:12px;color:var(--muted);margin-top:1px}
+.topbar-r{display:flex;align-items:center;gap:10px}
+.acc-pill{display:flex;align-items:center;gap:7px;background:var(--card);
+  border:1px solid var(--border);border-radius:40px;padding:5px 12px 5px 7px;font-size:12px}
+.acc-av{width:26px;height:26px;background:linear-gradient(135deg,var(--tt),var(--tt2));
+  border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--success);
+  box-shadow:0 0 5px var(--success)}
+.status-dot.off{background:var(--warn);box-shadow:0 0 5px var(--warn)}
+
+/* CONTENT */
+#content{flex:1;overflow-y:auto;padding:20px 24px}
+#content::-webkit-scrollbar{width:4px}
+#content::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* PAGES */
+.page{display:none;animation:fadeUp .3s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ALERT BAR */
+.alert-bar{background:rgba(37,244,238,.08);border:1px solid rgba(37,244,238,.2);
+  border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:9px;
+  font-size:12.5px;margin-bottom:18px}
+.alert-bar.warn{background:rgba(254,44,85,.08);border-color:rgba(254,44,85,.2)}
+
+/* STATS GRID */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:17px;transition:all .25s;cursor:default;position:relative;overflow:hidden}
+.stat:hover{border-color:rgba(254,44,85,.3);transform:translateY(-2px)}
+.stat:hover::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--tt),var(--tt2))}
+.stat-lbl{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:7px}
+.stat-val{font-size:24px;font-weight:700;font-family:var(--mono);letter-spacing:-1px}
+.stat-chg{font-size:11px;color:var(--success);margin-top:3px}
+
+/* PANELS */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
+.panel-title{font-size:13.5px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.two-col{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:18px}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+
+/* BUTTONS */
+.btn{padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;
+  cursor:pointer;border:none;transition:all .2s;font-family:var(--font)}
+.btn-p{background:linear-gradient(135deg,var(--tt),#d41f45);color:#fff;
+  box-shadow:0 3px 10px rgba(254,44,85,.35)}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(254,44,85,.5)}
+.btn-s{background:var(--card);color:var(--text);border:1px solid var(--border)}
+.btn-s:hover{border-color:var(--tt);color:var(--tt)}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.5px;padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.tbl td{padding:11px 10px;font-size:12.5px;border-bottom:1px solid rgba(30,30,46,.5);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(254,44,85,.025)}
+.cn{font-weight:600;font-size:12.5px}.cs{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;
+  padding:2px 7px;border-radius:5px}
+.badge.active{background:rgba(0,229,160,.12);color:var(--success)}
+.badge.paused{background:rgba(255,181,71,.12);color:var(--warn)}
+.badge.scheduled{background:rgba(37,244,238,.1);color:var(--tt2)}
+.badge.draft{background:rgba(255,181,71,.12);color:var(--warn)}
+.badge.published{background:rgba(0,229,160,.12);color:var(--success)}
+.badge-dot{width:4px;height:4px;border-radius:50%;background:currentColor}
+
+/* PROGRESS */
+.prog{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--tt),#ff6b35);transition:width .5s}
+.prog-fill.teal{background:linear-gradient(90deg,var(--tt2),#00c4c0)}
+
+/* ITEMS */
+.item{display:flex;align-items:center;gap:11px;padding:10px 11px;
+  background:var(--surface);border-radius:9px;border:1px solid var(--border);margin-bottom:7px}
+.item:last-child{margin-bottom:0}
+.item-flag{font-size:20px;flex-shrink:0}
+.item-info{flex:1;min-width:0}
+.item-name{font-size:12.5px;font-weight:600}
+.item-sub{font-size:10.5px;color:var(--muted);margin-top:1px}
+
+/* SPARKLINE */
+.spark{display:flex;align-items:flex-end;gap:3px;height:60px}
+.spark-bar{flex:1;border-radius:2px 2px 0 0;background:linear-gradient(0deg,var(--tt),#ff6b35);
+  opacity:.7;transition:opacity .2s;cursor:default}
+.spark-bar:hover{opacity:1}
+.spark-labels{display:flex;justify-content:space-between;font-size:9px;
+  color:var(--muted);font-family:var(--mono);margin-top:5px}
+
+/* FORM */
+.fg{margin-bottom:13px}
+.flbl{font-size:10px;font-weight:600;color:var(--muted);display:block;
+  margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.finp{width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:7px;color:var(--text);font-family:var(--font);font-size:13px;
+  padding:8px 11px;outline:none;transition:border-color .2s}
+.finp:focus{border-color:var(--tt)}
+select.finp{appearance:none;cursor:pointer}
+textarea.finp{resize:vertical;min-height:70px}
+
+/* MARKET CHIPS */
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{padding:4px 9px;border-radius:7px;font-size:11px;cursor:pointer;
+  border:1px solid var(--border);background:var(--surface);color:var(--muted);
+  display:flex;align-items:center;gap:4px;transition:all .2s}
+.chip.on{background:rgba(254,44,85,.12);border-color:var(--tt);color:var(--tt)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);
+  opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:18px;
+  padding:24px;width:440px;max-width:92vw;max-height:85vh;overflow-y:auto;
+  transform:scale(.95) translateY(10px);transition:transform .3s}
+.overlay.open .modal{transform:scale(1) translateY(0)}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:3px}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
+.modal-foot{display:flex;gap:7px;justify-content:flex-end;margin-top:18px}
+
+/* ICON BTNS */
+.ibtn{width:26px;height:26px;background:var(--surface);border:1px solid var(--border);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:11px;cursor:pointer;transition:all .2s}
+.ibtn:hover{border-color:var(--tt);color:var(--tt)}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;z-index:9999;
+  background:var(--card);border-radius:10px;padding:11px 16px;
+  font-size:12.5px;display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+  transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none}
+#toast.show{transform:translateY(0);opacity:1}
+
+/* AUTO CARDS */
+.auto-card{display:flex;align-items:center;gap:14px;padding:15px;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  margin-bottom:10px;transition:all .2s}
+.auto-card:hover{border-color:rgba(254,44,85,.25)}
+.auto-icon{font-size:26px;flex-shrink:0}
+.auto-info{flex:1}
+.auto-name{font-size:13px;font-weight:600}
+.auto-desc{font-size:11px;color:var(--muted);margin-top:3px}
+.auto-tags{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.auto-tag{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500}
+
+/* INTEGRATION */
+.int-card{display:flex;align-items:center;gap:12px;padding:14px;
+  background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  margin-bottom:8px;transition:all .2s}
+.int-card:hover{border-color:rgba(254,44,85,.25)}
+.int-logo{font-size:26px;flex-shrink:0}
+.int-info{flex:1}
+.int-name{font-size:13px;font-weight:600}
+.int-desc{font-size:11px;color:var(--muted)}
+.int-status{font-size:11px;padding:3px 9px;border-radius:5px;font-weight:600;cursor:pointer;border:none;font-family:var(--font)}
+.int-on{background:rgba(0,229,160,.12);color:var(--success)}
+.int-off{background:rgba(254,44,85,.15);color:var(--tt);cursor:pointer}
+
+/* MOBILE BOTTOM NAV */
+@media(max-width:700px){
+  #sidebar{display:none!important}
+  #main{width:100%!important}
+  #bottom-nav{display:flex!important}
+  #content{padding:14px 12px!important;padding-bottom:80px!important}
+  .stats{grid-template-columns:repeat(2,1fr)!important}
+  .two-col,.three-col{grid-template-columns:1fr!important}
+  .topbar{padding:12px 14px!important}
+  .topbar h1{font-size:17px!important}
+  .topbar-r .acc-pill span{display:none}
+  #top-action-btn{font-size:11px!important;padding:6px 10px!important}
+}
+@media(min-width:701px){#bottom-nav{display:none!important}}
+
+#bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  z-index:200;
+  justify-content:space-around;
+  padding:8px 0 10px;
+  display:none;
+}
+.bn-item{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  font-size:9px;color:var(--muted);cursor:pointer;padding:4px 8px;
+  border-radius:8px;transition:all .2s;font-weight:500;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+  min-width:50px;
+}
+.bn-item.active{color:var(--tt)}
+.bn-item .bni{font-size:20px}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR (Desktop) -->
+<nav id="sidebar">
+  <div class="logo">
+    <div class="logo-icon">♪</div>
+    <div><div class="logo-name">Yasmineli</div><div class="logo-sub">TikTok Manager</div></div>
+  </div>
+  <div class="nav">
+    <div class="nav-sec">Yönetim</div>
+    <div class="nav-item active" onclick="go('dashboard')"><span class="ni">📊</span>Dashboard</div>
+    <div class="nav-item" onclick="go('campaigns')"><span class="ni">📣</span>Kampanyalar<span class="nav-badge" id="camp-badge">4</span></div>
+    <div class="nav-item" onclick="go('scheduler')"><span class="ni">🗓</span>Zamanlama</div>
+    <div class="nav-item" onclick="go('automation')"><span class="ni">⚡</span>Otomasyon<span class="nav-badge teal">AI</span></div>
+    <div class="nav-sec">Analitik</div>
+    <div class="nav-item" onclick="go('analytics')"><span class="ni">📈</span>Performans</div>
+    <div class="nav-item" onclick="go('audience')"><span class="ni">🌍</span>Hedef Kitleler</div>
+    <div class="nav-sec">Hesap</div>
+    <div class="nav-item" onclick="go('integrations')"><span class="ni">🔗</span>Entegrasyonlar</div>
+    <div class="nav-item" onclick="go('settings')"><span class="ni">⚙️</span>Ayarlar</div>
+  </div>
+  <div class="sidebar-foot">
+    <button class="tt-btn connected" id="tt-connect-btn" onclick="connectTikTok()">♪ @yasmineli__ ✓</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar">
+    <div><h1 id="pg-title">Dashboard</h1><p id="pg-sub">Tüm kampanya ve otomasyon özeti</p></div>
+    <div class="topbar-r">
+      <div class="acc-pill">
+        <div class="acc-av">Y</div>
+        <span>@yasmineli__</span>
+        <div class="status-dot" id="status-dot"></div>
+      </div>
+      <button class="btn btn-p" id="top-action-btn" onclick="topAction()">+ Kampanya</button>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- ═══ DASHBOARD ═══════════════════════════════════════════════ -->
+    <div class="page active" id="page-dashboard">
+      <div class="alert-bar">
+        <span>⚡</span>
+        <span>3 otomasyon aktif · <strong style="color:var(--tt2)">Bugün 14:00'da</strong> beşik tanıtım videosu yayınlanacak · UK kitlesi optimize edildi</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-lbl">💰 Toplam Harcama</div><div class="stat-val" style="color:var(--tt)">₺18.4K</div><div class="stat-chg">↑ %23 bu ay</div></div>
+        <div class="stat"><div class="stat-lbl">👁 Görüntülenme</div><div class="stat-val" style="color:var(--tt2)">2.8M</div><div class="stat-chg">↑ %41</div></div>
+        <div class="stat"><div class="stat-lbl">🖱 CTR Oranı</div><div class="stat-val">4.7%</div><div class="stat-chg">↑ 0.8pp</div></div>
+        <div class="stat"><div class="stat-lbl">🛒 Dönüşüm</div><div class="stat-val" style="color:var(--success)">312</div><div class="stat-chg">↑ %18</div></div>
+      </div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-title">🌍 Pazar Performansı</div>
+          <div id="market-rows"></div>
+        </div>
+        <div>
+          <div class="panel" style="margin-bottom:14px">
+            <div class="sh"><div class="panel-title" style="margin:0">📣 Aktif Kampanyalar</div><button class="btn btn-s" style="font-size:11px" onclick="go('campaigns')">Tümü</button></div>
+            <div id="dash-camps"></div>
+          </div>
+          <div class="panel">
+            <div class="sh"><div class="panel-title" style="margin:0">⏰ Yaklaşan</div><button class="btn btn-s" style="font-size:11px" onclick="go('scheduler')">Takvim</button></div>
+            <div id="dash-posts"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CAMPAIGNS ════════════════════════════════════════════════ -->
+    <div class="page" id="page-campaigns">
+      <div class="sh">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-s" style="font-size:11px" onclick="filterCamps('all')">Tümü (<span id="fc-all">0</span>)</button>
+          <button class="btn btn-s" style="font-size:11px;color:var(--success);border-color:var(--success)" onclick="filterCamps('active')">Aktif (<span id="fc-active">0</span>)</button>
+          <button class="btn btn-s" style="font-size:11px;color:var(--warn);border-color:var(--warn)" onclick="filterCamps('paused')">Duraklatıldı (<span id="fc-paused">0</span>)</button>
+        </div>
+        <button class="btn btn-p" onclick="openModal('camp')">+ Yeni Kampanya</button>
+      </div>
+      <div class="panel" style="overflow-x:auto">
+        <table class="tbl" id="camp-table"></table>
+      </div>
+    </div>
+
+    <!-- ═══ SCHEDULER ════════════════════════════════════════════════ -->
+    <div class="page" id="page-scheduler">
+      <div class="two-col">
+        <div>
+          <div class="panel" style="margin-bottom:14px">
+            <div class="panel-title">✏️ Yeni Gönderi Oluştur</div>
+            <div class="fg"><label class="flbl">Başlık</label><input class="finp" id="post-title" placeholder="Beşik Tanıtım..."></div>
+            <div class="fg"><label class="flbl">Caption / Açıklama</label><textarea class="finp" id="post-caption" placeholder="#yasmineli #luxurybaby..."></textarea></div>
+            <div class="fg"><label class="flbl">Pazarlar</label>
+              <div class="chips">
+                <div class="chip on" onclick="toggleChip(this,'GB')">🇬🇧 UK</div>
+                <div class="chip on" onclick="toggleChip(this,'US')">🇺🇸 US</div>
+                <div class="chip" onclick="toggleChip(this,'TR')">🇹🇷 TR</div>
+                <div class="chip" onclick="toggleChip(this,'DE')">🇩🇪 DE</div>
+                <div class="chip" onclick="toggleChip(this,'ALL')">🌍 Tümü</div>
+              </div>
+            </div>
+            <div class="fg"><label class="flbl">Yayın Tarihi & Saati</label><input class="finp" id="post-date" type="datetime-local"></div>
+            <button class="btn btn-p" style="width:100%" onclick="schedulePost()">📅 Zamanla</button>
+          </div>
+          <div class="panel">
+            <div class="panel-title">⏰ En İyi Gönderim Saatleri</div>
+            <div class="item"><div class="item-flag">🇬🇧</div><div class="item-info"><div class="item-name">UK Kitlesi</div><div class="item-sub">En iyi: 19:00–21:00 GMT</div></div><div style="font-family:var(--mono);font-size:13px;color:var(--tt);font-weight:700">19:00</div></div>
+            <div class="item"><div class="item-flag">🇺🇸</div><div class="item-info"><div class="item-name">US Kitlesi</div><div class="item-sub">En iyi: 15:00–17:00 EST</div></div><div style="font-family:var(--mono);font-size:13px;color:var(--tt2);font-weight:700">15:00</div></div>
+            <div class="item"><div class="item-flag">🇹🇷</div><div class="item-info"><div class="item-name">TR Kitlesi</div><div class="item-sub">En iyi: 20:00–22:00 TRT</div></div><div style="font-family:var(--mono);font-size:13px;color:var(--warn);font-weight:700">20:00</div></div>
+            <div class="item"><div class="item-flag">🌍</div><div class="item-info"><div class="item-name">Global</div><div class="item-sub">En iyi: 12:00–14:00 UTC</div></div><div style="font-family:var(--mono);font-size:13px;color:var(--success);font-weight:700">13:00</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="sh"><div class="panel-title" style="margin:0">📋 Planlanmış Gönderiler</div></div>
+          <div id="posts-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ AUTOMATION ════════════════════════════════════════════════ -->
+    <div class="page" id="page-automation">
+      <div class="sh">
+        <div class="panel-title" style="margin:0">⚡ Aktif Otomasyonlar</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-s" onclick="runAll()">▶ Hepsini Çalıştır</button>
+          <button class="btn btn-p" onclick="openModal('auto')">+ Yeni</button>
+        </div>
+      </div>
+      <div id="auto-list"></div>
+      <div class="panel-title" style="margin:16px 0 10px">📋 Şablonlar</div>
+      <div class="three-col" id="auto-templates"></div>
+      <div class="panel" style="margin-top:14px">
+        <div class="panel-title">🤖 AI Caption Üretici</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div class="fg" style="margin:0"><label class="flbl">Ürün</label><input class="finp" id="cap-product" value="Yasmineli Luxury Beşik"></div>
+          <div class="fg" style="margin:0"><label class="flbl">Ton</label>
+            <select class="finp" id="cap-tone"><option value="luxury">Luxury</option><option value="playful">Eğlenceli</option><option value="informative">Bilgilendirici</option></select>
+          </div>
+        </div>
+        <div class="fg"><label class="flbl">Pazarlar</label>
+          <div class="chips">
+            <div class="chip on" onclick="toggleChip(this,'GB-cap')">🇬🇧 UK</div>
+            <div class="chip on" onclick="toggleChip(this,'US-cap')">🇺🇸 US</div>
+            <div class="chip on" onclick="toggleChip(this,'TR-cap')">🇹🇷 TR</div>
+            <div class="chip" onclick="toggleChip(this,'DE-cap')">🇩🇪 DE</div>
+          </div>
+        </div>
+        <button class="btn btn-p" style="width:100%" onclick="genCaptions()">🤖 Caption Üret</button>
+        <div id="caption-results" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- ═══ ANALYTICS ════════════════════════════════════════════════ -->
+    <div class="page" id="page-analytics">
+      <div class="stats">
+        <div class="stat"><div class="stat-lbl">📊 Toplam Gösterim</div><div class="stat-val" style="color:var(--tt)">4.1M</div><div class="stat-chg">↑ %34</div></div>
+        <div class="stat"><div class="stat-lbl">❤️ Beğeni</div><div class="stat-val">142K</div><div class="stat-chg">↑ %28</div></div>
+        <div class="stat"><div class="stat-lbl">💬 Yorum</div><div class="stat-val" style="color:var(--tt2)">8.2K</div><div class="stat-chg">↑ %12</div></div>
+        <div class="stat"><div class="stat-lbl">📈 ROAS</div><div class="stat-val" style="color:var(--success)">3.8x</div><div class="stat-chg">↑ 0.4x</div></div>
+      </div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-title">📈 Haftalık Görüntülenme</div>
+          <div class="spark" id="sparkline"></div>
+          <div class="spark-labels"><span>Pzt</span><span>Sal</span><span>Çar</span><span>Per</span><span>Cum</span><span>Cmt</span><span>Paz</span></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🎯 CTR — Pazar Bazlı</div>
+          <div id="ctr-bars"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ AUDIENCE ═════════════════════════════════════════════════ -->
+    <div class="page" id="page-audience">
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-title">🌍 Ülke Segmentleri</div>
+          <div id="aud-countries"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🎯 İlgi Alanı Segmentleri</div>
+          <div class="item"><div class="item-flag">👶</div><div class="item-info"><div class="item-name">Yeni Ebeveynler</div><div class="item-sub">4.2M kullanıcı · En yüksek etkileşim</div></div><span class="badge active"><span class="badge-dot"></span>Aktif</span></div>
+          <div class="item"><div class="item-flag">🤰</div><div class="item-info"><div class="item-name">Hamile Anneler</div><div class="item-sub">1.8M · Yüksek satın alma niyeti</div></div><span class="badge active"><span class="badge-dot"></span>Aktif</span></div>
+          <div class="item"><div class="item-flag">🛏</div><div class="item-info"><div class="item-name">Bebek Ürünleri</div><div class="item-sub">3.1M kullanıcı</div></div><span class="badge active"><span class="badge-dot"></span>Aktif</span></div>
+          <div class="item"><div class="item-flag">💎</div><div class="item-info"><div class="item-name">Lüks Bebek Markaları</div><div class="item-sub">800K · Premium segment</div></div><span class="badge scheduled"><span class="badge-dot"></span>Planlandı</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ INTEGRATIONS ══════════════════════════════════════════════ -->
+    <div class="page" id="page-integrations">
+      <div id="int-list"></div>
+    </div>
+
+    <!-- ═══ SETTINGS ════════════════════════════════════════════════ -->
+    <div class="page" id="page-settings">
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-title">⚙️ Hesap Ayarları</div>
+          <div class="fg"><label class="flbl">TikTok Hesabı</label><input class="finp" value="@yasmineli__"></div>
+          <div class="fg"><label class="flbl">Marka Adı</label><input class="finp" value="Yasmineli"></div>
+          <div class="fg"><label class="flbl">Para Birimi</label>
+            <select class="finp"><option>TRY - Türk Lirası</option><option>GBP - İngiliz Sterlini</option><option>USD - Amerikan Doları</option></select>
+          </div>
+          <button class="btn btn-p" onclick="toast('Ayarlar kaydedildi ✓','success')">Kaydet</button>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🔔 Bildirim Ayarları</div>
+          <div class="fg"><label class="flbl">Bildirim E-postası</label><input class="finp" placeholder="ornek@email.com"></div>
+          <div class="fg"><label class="flbl">Bildirim Sıklığı</label>
+            <select class="finp"><option>Anlık bildirim</option><option>Günlük özet</option><option>Haftalık rapor</option></select>
+          </div>
+          <div class="fg"><label class="flbl">Bütçe Alarm Eşiği (%)</label><input class="finp" type="number" value="80"></div>
+          <button class="btn btn-p" onclick="toast('Bildirim ayarları kaydedildi ✓','success')">Kaydet</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- BOTTOM NAV (Mobile) -->
+<div id="bottom-nav">
+  <div class="bn-item active" id="bn-dashboard" ontouchstart="" onclick="go('dashboard');return false;"><span class="bni">📊</span>Ana</div>
+  <div class="bn-item" id="bn-campaigns" ontouchstart="" onclick="go('campaigns');return false;"><span class="bni">📣</span>Kampanya</div>
+  <div class="bn-item" id="bn-scheduler" ontouchstart="" onclick="go('scheduler');return false;"><span class="bni">🗓</span>Zamanla</div>
+  <div class="bn-item" id="bn-automation" ontouchstart="" onclick="go('automation');return false;"><span class="bni">⚡</span>Otomasyon</div>
+  <div class="bn-item" id="bn-analytics" ontouchstart="" onclick="go('analytics');return false;"><span class="bni">📈</span>Analitik</div>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="modal-camp" onclick="closeModal(event,'camp')">
+  <div class="modal">
+    <div class="modal-title">📣 Yeni Kampanya</div>
+    <div class="modal-sub">TikTok reklamını global pazarlar için yapılandır</div>
+    <div class="fg"><label class="flbl">Kampanya Adı *</label><input class="finp" id="m-camp-name" placeholder="UK Luxury Beşik 2025..."></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg"><label class="flbl">Reklam Türü</label>
+        <select class="finp" id="m-camp-type"><option>In-Feed Ads</option><option>TopView Ads</option><option>Branded Hashtag</option><option>Spark Ads</option></select>
+      </div>
+      <div class="fg"><label class="flbl">Amaç</label>
+        <select class="finp" id="m-camp-obj"><option>REACH</option><option>TRAFFIC</option><option>CONVERSIONS</option><option>VIDEO_VIEWS</option></select>
+      </div>
+    </div>
+    <div class="fg"><label class="flbl">Hedef Pazarlar *</label>
+      <div class="chips" id="m-camp-markets">
+        <div class="chip on" onclick="toggleChip(this,'m-GB')">🇬🇧 UK</div>
+        <div class="chip on" onclick="toggleChip(this,'m-US')">🇺🇸 US</div>
+        <div class="chip" onclick="toggleChip(this,'m-TR')">🇹🇷 TR</div>
+        <div class="chip" onclick="toggleChip(this,'m-DE')">🇩🇪 DE</div>
+        <div class="chip" onclick="toggleChip(this,'m-FR')">🇫🇷 FR</div>
+        <div class="chip" onclick="toggleChip(this,'m-ALL')">🌍 Tümü</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg"><label class="flbl">Günlük Bütçe (₺) *</label><input class="finp" id="m-camp-budget" type="number" placeholder="200"></div>
+      <div class="fg"><label class="flbl">Başlangıç Tarihi</label><input class="finp" id="m-camp-date" type="date"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-s" onclick="document.getElementById('modal-camp').classList.remove('open')">İptal</button>
+      <button class="btn btn-p" onclick="saveCampaign()">🚀 Oluştur</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-auto" onclick="closeModal(event,'auto')">
+  <div class="modal">
+    <div class="modal-title">⚡ Yeni Otomasyon</div>
+    <div class="modal-sub">Tekrarlayan görevleri otomatikleştir</div>
+    <div class="fg"><label class="flbl">Ad</label><input class="finp" id="m-auto-name" placeholder="Haftalık Beşik Gönderisi..."></div>
+    <div class="fg"><label class="flbl">Tür</label>
+      <select class="finp" id="m-auto-type">
+        <option value="recurring_post">📅 Tekrarlayan Gönderi</option>
+        <option value="budget_optimizer">📊 Bütçe Optimizasyonu</option>
+        <option value="performance_alert">🔔 Performans Alarmı</option>
+        <option value="ab_test">🎯 A/B Test</option>
+      </select>
+    </div>
+    <div class="fg"><label class="flbl">Sıklık</label>
+      <select class="finp" id="m-auto-freq"><option>Günlük</option><option>Haftalık</option><option>Aylık</option></select>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-s" onclick="document.getElementById('modal-auto').classList.remove('open')">İptal</button>
+      <button class="btn btn-p" onclick="saveAuto()">⚡ Oluştur</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+
+const MARKETS = {
+  GB:{name:'Birleşik Krallık',flag:'🇬🇧',ctr:3.2,spend:6200,impressions:84000},
+  US:{name:'Amerika',flag:'🇺🇸',ctr:5.1,spend:8900,impressions:210000},
+  TR:{name:'Türkiye',flag:'🇹🇷',ctr:6.4,spend:2100,impressions:52000},
+  DE:{name:'Almanya',flag:'🇩🇪',ctr:2.8,spend:1200,impressions:31000},
+  FR:{name:'Fransa',flag:'🇫🇷',ctr:2.4,spend:900,impressions:24000},
+  AU:{name:'Avustralya',flag:'🇦🇺',ctr:1.9,spend:600,impressions:18000},
+};
+
+let campaigns = JSON.parse(localStorage.getItem('ym_campaigns')||'null') || [
+  {id:'c1',name:'UK Luxury Crib 2025',type:'In-Feed Ads',obj:'REACH',markets:['GB'],budget:200,spend:4200,impressions:84000,clicks:2688,conversions:42,ctr:3.2,status:'active',date:'2025-01-01'},
+  {id:'c2',name:'US Babynest Launch',type:'TopView',obj:'CONVERSIONS',markets:['US'],budget:350,spend:6800,impressions:210000,clicks:10710,conversions:128,ctr:5.1,status:'active',date:'2025-01-15'},
+  {id:'c3',name:'Global Roseline Collection',type:'In-Feed Ads',obj:'TRAFFIC',markets:['TR','GB','US','DE'],budget:150,spend:2100,impressions:62000,clicks:2666,conversions:31,ctr:4.3,status:'scheduled',date:'2025-03-20'},
+  {id:'c4',name:'TR Yatak Odası Seti',type:'In-Feed Ads',obj:'REACH',markets:['TR'],budget:100,spend:2100,impressions:52000,clicks:3328,conversions:28,ctr:6.4,status:'active',date:'2025-02-01'},
+];
+
+let posts = JSON.parse(localStorage.getItem('ym_posts')||'null') || [
+  {id:'p1',title:'Beşik Tanıtım',caption:'✨ Yasmineli luxury beşik! #luxurybaby #yasmineli',markets:['GB','US'],date:new Date(Date.now()+3600000).toISOString(),status:'scheduled'},
+  {id:'p2',title:'Babynest Unboxing',caption:'👶 Softest nest for your little one! #babynest',markets:['US'],date:new Date(Date.now()+86400000).toISOString(),status:'scheduled'},
+  {id:'p3',title:'Roseline SS2025',caption:'👗 Roseline spring koleksiyonu! #roseline',markets:['TR','GB'],date:new Date(Date.now()+172800000).toISOString(),status:'draft'},
+];
+
+let automations = JSON.parse(localStorage.getItem('ym_autos')||'null') || [
+  {id:'a1',name:'Haftalık Gönderi',type:'recurring_post',desc:'Her Pazartesi 14:00 UK+US\'e otomatik gönderi',tags:['🇬🇧 UK','🇺🇸 US'],enabled:true,last:'2 gün önce',next:'5 gün sonra'},
+  {id:'a2',name:'Bütçe Optimizasyonu',type:'budget_optimizer',desc:'CTR %3 altına düşünce bütçeyi yüksek performanslı pazara aktar',tags:['🤖 Otomatik'],enabled:true,last:'3 saat önce',next:'Anlık'},
+  {id:'a3',name:'Çok Dilli Caption',type:'caption_generator',desc:'AI ile UK/US/DE pazarları için otomatik caption üret',tags:['🤖 AI','24 caption/ay'],enabled:true,last:'Dün',next:'Perşembe'},
+];
+
+const AUTO_ICONS = {recurring_post:'📅',budget_optimizer:'📊',performance_alert:'🔔',ab_test:'🎯',caption_generator:'✍️'};
+const PAGES = {
+  dashboard:['Dashboard','Tüm kampanya ve otomasyon özeti','+ Kampanya'],
+  campaigns:['Kampanyalar','TikTok reklam kampanyalarını yönet','+ Yeni Kampanya'],
+  scheduler:['Gönderi Zamanlama','Otomatik içerik takvimi','+ Zamanla'],
+  automation:['Otomasyon','Tekrarlayan görevleri otomatikleştir','▶ Çalıştır'],
+  analytics:['Analitik','Detaylı performans verileri','Rapor İndir'],
+  audience:['Hedef Kitleler','Global pazar segmentleri','+ Segment'],
+  integrations:['Entegrasyonlar','Uygulama bağlantıları',''],
+  settings:['Ayarlar','Hesap ve bildirim tercihleri',''],
+};
+
+let currentPage = 'dashboard';
+let connected = JSON.parse(localStorage.getItem('ym_connected')||'false');
+
+function save(){
+  localStorage.setItem('ym_campaigns',JSON.stringify(campaigns));
+  localStorage.setItem('ym_posts',JSON.stringify(posts));
+  localStorage.setItem('ym_autos',JSON.stringify(automations));
+  localStorage.setItem('ym_connected',JSON.stringify(connected));
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+
+function go(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.bn-item').forEach(n=>n.classList.remove('active'));
+  
+  const pg = document.getElementById('page-'+id);
+  if(pg) pg.classList.add('active');
+  
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))
+      n.classList.add('active');
+  });
+  
+  const bnEl = document.getElementById('bn-'+id);
+  if(bnEl) bnEl.classList.add('active');
+  
+  const pg2=PAGES[id]||[id,'',''];
+  document.getElementById('pg-title').textContent=pg2[0];
+  document.getElementById('pg-sub').textContent=pg2[1];
+  const tab=document.getElementById('top-action-btn');
+  tab.textContent=pg2[2];
+  tab.style.display=pg2[2]?'':'none';
+  currentPage=id;
+  render();
+}
+
+function topAction(){
+  const map={campaigns:'camp',scheduler:'post-modal',automation:'auto'};
+  if(map[currentPage]==='post-modal'){schedulePost();return;}
+  if(map[currentPage])openModal(map[currentPage]);
+  if(currentPage==='analytics')toast('Rapor oluşturuluyor...','info');
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+
+function render(){
+  const p=currentPage;
+  if(p==='dashboard')renderDashboard();
+  if(p==='campaigns')renderCampaigns();
+  if(p==='scheduler')renderScheduler();
+  if(p==='automation')renderAutomation();
+  if(p==='analytics')renderAnalytics();
+  if(p==='audience')renderAudience();
+  if(p==='integrations')renderIntegrations();
+  updateHeader();
+}
+
+function updateHeader(){
+  const btn=document.getElementById('tt-connect-btn');
+  const dot=document.getElementById('status-dot');
+  if(connected){
+    btn.className='tt-btn connected';btn.textContent='♪ @yasmineli__ ✓';
+    dot.className='status-dot';
+  } else {
+    btn.className='tt-btn';btn.textContent='♪ TikTok Bağla';
+    dot.className='status-dot off';
+  }
+}
+
+function renderDashboard(){
+  // Market rows
+  const mr=document.getElementById('market-rows');
+  mr.innerHTML=Object.entries(MARKETS).slice(0,4).map(([k,m])=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(30,30,46,.5)">
+      <span style="font-size:20px">${m.flag}</span>
+      <div style="flex:1"><div style="font-size:12.5px;font-weight:600">${m.name}</div>
+        <div style="font-size:10px;color:var(--muted)">${(m.impressions/1000).toFixed(0)}K görüntülenme · ${m.ctr}% CTR</div></div>
+      <div style="flex:1"><div class="prog"><div class="prog-fill" style="width:${Math.min(m.ctr*14,100)}%"></div></div></div>
+      <div style="font-family:var(--mono);font-size:12px;font-weight:700;min-width:48px;text-align:right">₺${(m.spend/1000).toFixed(1)}K</div>
+    </div>`).join('');
+
+  // Dashboard camps
+  const dc=document.getElementById('dash-camps');
+  dc.innerHTML=campaigns.filter(c=>c.status==='active').slice(0,3).map(c=>`
+    <div class="item"><div class="item-flag">${c.markets.map(m=>MARKETS[m]?.flag||m).join('')}</div>
+      <div class="item-info"><div class="item-name">${c.name}</div><div class="item-sub">₺${c.spend.toLocaleString('tr-TR')} harcandı</div></div>
+      <span class="badge ${c.status}"><span class="badge-dot"></span>${statusLabel(c.status)}</span></div>`).join('');
+
+  // Upcoming posts
+  const up=document.getElementById('dash-posts');
+  const now=Date.now();
+  const upcoming=posts.filter(p=>new Date(p.date).getTime()>now).slice(0,3);
+  up.innerHTML=upcoming.length?upcoming.map(p=>`
+    <div class="item">
+      <div class="item-info"><div class="item-name">${p.title}</div>
+        <div class="item-sub">${formatDate(p.date)} · ${p.markets.map(m=>MARKETS[m]?.flag||m).join('')}</div></div>
+      <span class="badge ${p.status}"><span class="badge-dot"></span>${statusLabel(p.status)}</span></div>`).join('')
+    :'<div style="color:var(--muted);font-size:12px;text-align:center;padding:15px">Planlanmış gönderi yok</div>';
+}
+
+function renderCampaigns(filter='all'){
+  const counts={all:campaigns.length,active:campaigns.filter(c=>c.status==='active').length,paused:campaigns.filter(c=>c.status==='paused').length};
+  ['all','active','paused'].forEach(k=>{const el=document.getElementById('fc-'+k);if(el)el.textContent=counts[k];});
+  document.getElementById('camp-badge').textContent=counts.active;
+
+  const list=filter==='all'?campaigns:campaigns.filter(c=>c.status===filter);
+  const t=document.getElementById('camp-table');
+  t.innerHTML=`<thead><tr>${['Kampanya','Pazarlar','Bütçe/Gün','Harcama','Görüntülenme','CTR','Dönüşüm','Durum','İşlem'].map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+  <tbody>${list.length?list.map(c=>`<tr>
+    <td><div class="cn">${c.name}</div><div class="cs">${c.type} · ${c.obj}</div></td>
+    <td style="font-size:18px">${c.markets.map(m=>MARKETS[m]?.flag||m).join('')}</td>
+    <td style="font-family:var(--mono)">₺${c.budget}</td>
+    <td style="font-family:var(--mono)">₺${c.spend.toLocaleString('tr-TR')}</td>
+    <td style="font-family:var(--mono)">${(c.impressions/1000).toFixed(0)}K</td>
+    <td style="font-family:var(--mono);color:${c.ctr>=4?'var(--success)':c.ctr>=2.5?'var(--warn)':'var(--tt)'}">${c.ctr}%</td>
+    <td style="font-family:var(--mono)">${c.conversions}</td>
+    <td><span class="badge ${c.status}"><span class="badge-dot"></span>${statusLabel(c.status)}</span></td>
+    <td><div style="display:flex;gap:5px">
+      <div class="ibtn" onclick="toggleCamp('${c.id}')" title="${c.status==='active'?'Duraklat':'Aktif Et'}">${c.status==='active'?'⏸':'▶️'}</div>
+      <div class="ibtn" onclick="delCamp('${c.id}')" title="Sil">🗑</div>
+    </div></td></tr>`).join(''):`<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted)">Kampanya bulunamadı</td></tr>`}</tbody>`;
+}
+
+function renderScheduler(){
+  const pl=document.getElementById('posts-list');
+  pl.innerHTML=posts.sort((a,b)=>new Date(a.date)-new Date(b.date)).map(p=>`
+    <div class="item" style="margin-bottom:8px;flex-direction:column;align-items:flex-start">
+      <div style="display:flex;align-items:center;gap:8px;width:100%">
+        <div style="flex:1"><div class="item-name">${p.title}</div>
+          <div class="item-sub">${p.caption.slice(0,50)}...</div>
+          <div class="item-sub">${formatDate(p.date)} · ${p.markets.map(m=>MARKETS[m]?.flag||m).join('')}</div></div>
+        <div style="display:flex;gap:5px;align-items:center">
+          <span class="badge ${p.status}"><span class="badge-dot"></span>${statusLabel(p.status)}</span>
+          <div class="ibtn" onclick="delPost('${p.id}')">🗑</div>
+        </div>
+      </div>
+    </div>`).join('') || '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Henüz gönderi yok</div>';
+}
+
+function renderAutomation(){
+  const al=document.getElementById('auto-list');
+  al.innerHTML=automations.map(a=>`
+    <div class="auto-card">
+      <div class="auto-icon">${AUTO_ICONS[a.type]||'⚙️'}</div>
+      <div class="auto-info">
+        <div class="auto-name">${a.name}</div>
+        <div class="auto-desc">${a.desc}</div>
+        <div class="auto-tags">${a.tags.map(t=>`<span class="auto-tag" style="background:rgba(254,44,85,.1);color:var(--tt)">${t}</span>`).join('')}
+          ${a.last?`<span class="auto-tag" style="background:var(--surface);color:var(--muted)">Son: ${a.last}</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:7px;align-items:center;flex-shrink:0">
+        <span class="badge ${a.enabled?'active':'paused'}"><span class="badge-dot"></span>${a.enabled?'Aktif':'Durdu'}</span>
+        <button class="btn btn-s" style="font-size:11px" onclick="toggleAuto('${a.id}')">${a.enabled?'⏸ Durdur':'▶ Başlat'}</button>
+      </div>
+    </div>`).join('');
+
+  const tmpl=document.getElementById('auto-templates');
+  tmpl.innerHTML=[
+    {icon:'🔄',t:'Tekrarlayan',d:'Belirlenen aralıklarla otomatik içerik yayınla',c:'var(--tt)',type:'recurring_post'},
+    {icon:'🔔',t:'Performans Alarmı',d:'CTR veya bütçe eşiği aşıldığında bildirim al',c:'var(--tt2)',type:'performance_alert'},
+    {icon:'🎯',t:'A/B Test',d:'İki reklam versiyonunu karşılaştır, kazananı seç',c:'var(--success)',type:'ab_test'},
+  ].map(t=>`<div class="panel" style="cursor:pointer;transition:all .2s" 
+    onmouseover="this.style.borderColor='${t.c}44'" onmouseout="this.style.borderColor='var(--border)'"
+    onclick="document.getElementById('m-auto-type').value='${t.type}';openModal('auto')">
+    <div style="font-size:22px;margin-bottom:7px">${t.icon}</div>
+    <div style="font-size:12.5px;font-weight:600;margin-bottom:4px">${t.t}</div>
+    <div style="font-size:11px;color:var(--muted)">${t.d}</div>
+    <div style="margin-top:10px;font-size:11px;color:${t.c};font-weight:600">+ Ekle →</div>
+  </div>`).join('');
+}
+
+function renderAnalytics(){
+  const sp=document.getElementById('sparkline');
+  const vals=[45,62,38,78,92,65,100];
+  sp.innerHTML=vals.map(v=>`<div class="spark-bar" style="height:${v}%"></div>`).join('');
+
+  const cb=document.getElementById('ctr-bars');
+  cb.innerHTML=Object.entries(MARKETS).map(([k,m])=>`
+    <div style="margin-bottom:11px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+        <span>${m.flag} ${m.name}</span>
+        <span style="font-family:var(--mono);color:${m.ctr>=5?'var(--success)':m.ctr>=3?'var(--warn)':'var(--tt)'}">${m.ctr}%</span>
+      </div>
+      <div class="prog"><div class="prog-fill" style="width:${Math.min(m.ctr*14,100)}%"></div></div>
+    </div>`).join('');
+}
+
+function renderAudience(){
+  const ac=document.getElementById('aud-countries');
+  const aud=[
+    {code:'US',size:'2.4M',reach:92},{code:'GB',size:'1.8M',reach:78},
+    {code:'TR',size:'1.1M',reach:62},{code:'DE',size:'900K',reach:45},
+    {code:'FR',size:'720K',reach:38},{code:'AU',size:'420K',reach:22},
+  ];
+  ac.innerHTML=aud.map(a=>`
+    <div class="item">
+      <div class="item-flag">${MARKETS[a.code]?.flag||a.code}</div>
+      <div class="item-info"><div class="item-name">${MARKETS[a.code]?.name||a.code}</div>
+        <div class="item-sub">${a.size} potansiyel erişim</div></div>
+      <div style="width:70px"><div class="prog"><div class="prog-fill" style="width:${a.reach}%"></div></div></div>
+      <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--tt);min-width:30px;text-align:right">%${a.reach}</div>
+    </div>`).join('');
+}
+
+function renderIntegrations(){
+  const il=document.getElementById('int-list');
+  const ints=[
+    {icon:'♪',name:'TikTok Business API',desc:'Reklam yönetimi ve kampanya oluşturma · @yasmineli__',on:connected},
+    {icon:'📊',name:'TikTok Ads Manager',desc:'Tam reklam kampanyası yönetimi ve optimizasyon',on:connected},
+    {icon:'💬',name:'WhatsApp Business',desc:'Reklam dönüşümlerini WhatsApp\'a yönlendir',on:true},
+    {icon:'📸',name:'Instagram (Meta)',desc:'Instagram ile çapraz gönderi ve Meta Ads entegrasyonu',on:false},
+    {icon:'🛒',name:'TikTok Shop',desc:'Ürün kataloğu ve doğrudan satış entegrasyonu',on:false},
+  ];
+  il.innerHTML=ints.map(i=>`
+    <div class="int-card">
+      <div class="int-logo">${i.icon}</div>
+      <div class="int-info"><div class="int-name">${i.name}</div><div class="int-desc">${i.desc}</div></div>
+      ${i.on
+        ?'<button class="int-status int-on">✓ Bağlandı</button>'
+        :`<button class="int-status int-off" onclick="connectInt('${i.name}')">+ Bağla</button>`}
+    </div>`).join('');
+}
+
+// ─── ACTIONS ──────────────────────────────────────────────────────────────────
+
+function filterCamps(f){renderCampaigns(f)}
+
+function toggleCamp(id){
+  const c=campaigns.find(x=>x.id===id);
+  if(!c)return;
+  c.status=c.status==='active'?'paused':'active';
+  save();renderCampaigns();
+  toast(c.status==='active'?'Kampanya aktif edildi ✓':'Kampanya duraklatıldı','success');
+}
+
+function delCamp(id){
+  if(!confirm('Kampanya silinsin mi?'))return;
+  campaigns=campaigns.filter(c=>c.id!==id);
+  save();renderCampaigns();toast('Kampanya silindi','info');
+}
+
+function saveCampaign(){
+  const name=document.getElementById('m-camp-name').value.trim();
+  const budget=parseInt(document.getElementById('m-camp-budget').value);
+  if(!name){toast('Kampanya adı zorunlu!','error');return;}
+  if(!budget||budget<1){toast('Bütçe zorunlu!','error');return;}
+  const markets=[...document.querySelectorAll('#m-camp-markets .chip.on')].map(c=>c.getAttribute('onclick').match(/'m-([A-Z]+)'/)?.[1]).filter(Boolean);
+  campaigns.push({
+    id:'c'+Date.now(),name,type:document.getElementById('m-camp-type').value,
+    obj:document.getElementById('m-camp-obj').value,
+    markets:markets.length?markets:['GB'],
+    budget,spend:0,impressions:0,clicks:0,conversions:0,ctr:0,
+    status:'scheduled',date:document.getElementById('m-camp-date').value||new Date().toISOString().split('T')[0]
+  });
+  save();document.getElementById('modal-camp').classList.remove('open');
+  renderCampaigns();toast('Kampanya oluşturuldu! 🚀','success');
+}
+
+function schedulePost(){
+  const title=document.getElementById('post-title').value.trim();
+  const caption=document.getElementById('post-caption').value.trim();
+  const date=document.getElementById('post-date').value;
+  if(!title||!caption||!date){toast('Tüm alanlar zorunlu!','error');return;}
+  const markets=[...document.querySelectorAll('#page-scheduler .chip.on')].map(c=>{
+    const m=c.getAttribute('onclick').match(/'([A-Z]+)'/);return m?m[1]:null;
+  }).filter(Boolean);
+  posts.push({id:'p'+Date.now(),title,caption,markets:markets.length?markets:['GB'],
+    date:new Date(date).toISOString(),status:'scheduled'});
+  save();
+  document.getElementById('post-title').value='';
+  document.getElementById('post-caption').value='';
+  document.getElementById('post-date').value='';
+  renderScheduler();toast('Gönderi zamanlandı! 📅','success');
+}
+
+function delPost(id){
+  posts=posts.filter(p=>p.id!==id);save();renderScheduler();toast('Gönderi silindi','info');
+}
+
+function saveAuto(){
+  const name=document.getElementById('m-auto-name').value.trim();
+  if(!name){toast('İsim zorunlu!','error');return;}
+  automations.push({
+    id:'a'+Date.now(),name,type:document.getElementById('m-auto-type').value,
+    desc:document.getElementById('m-auto-freq').value+' aralıklarla çalışır',
+    tags:[document.getElementById('m-auto-freq').value],enabled:true,last:'Henüz çalışmadı'
+  });
+  save();document.getElementById('modal-auto').classList.remove('open');
+  renderAutomation();toast('Otomasyon oluşturuldu! ⚡','success');
+}
+
+function toggleAuto(id){
+  const a=automations.find(x=>x.id===id);if(!a)return;
+  a.enabled=!a.enabled;save();renderAutomation();
+  toast(a.enabled?'Otomasyon aktif edildi ✓':'Otomasyon durduruldu','success');
+}
+
+function runAll(){
+  toast('Tüm otomasyonlar çalıştırılıyor... ⚡','info');
+  setTimeout(()=>toast('3 otomasyon tamamlandı ✓','success'),2000);
+}
+
+function connectTikTok(){
+  if(connected)return;
+  connected=true;save();updateHeader();renderIntegrations();
+  toast('TikTok bağlandı! @yasmineli__ ✓','success');
+}
+
+function connectInt(name){
+  toast(`${name} bağlantısı için TikTok Business hesabı gerekli`,'info');
+}
+
+function genCaptions(){
+  const product=document.getElementById('cap-product').value;
+  const tone=document.getElementById('cap-tone').value;
+  const markets=[...document.querySelectorAll('#page-automation .chip.on')].map(c=>{
+    const m=c.getAttribute('onclick').match(/'([A-Z]+-cap)'/);return m?m[1].replace('-cap',''):null;
+  }).filter(Boolean);
+  
+  const toneMap={luxury:'lüks ve şık',playful:'eğlenceli ve sevimli',informative:'bilgilendirici'};
+  const captions={
+    GB:`✨ Introducing ${product} — where luxury meets your little one's world. Premium quality, timeless design. Shop now! #LuxuryBaby #YasmineliUK #NurseryGoals #BabyBoutique`,
+    US:`💕 Your baby deserves the best! ${product} is finally here 🎉 Crafted with love for your precious one. Link in bio! #NewbornStyle #YasmineliUS #BabyRegistry #MomLife`,
+    TR:`✨ ${product} ile bebeğinize en iyisini sunun! Lüks tasarım, üstün kalite 👶 Hemen sipariş verin! #Yasmineli #LüksBeşik #BebkOdası #AnneVeBebek`,
+    DE:`✨ ${product} — Luxus für Ihr kleines Wunder. Handgefertigt mit Liebe und höchster Qualität. Jetzt entdecken! #LuxusBaby #YasmineliDE #Babyzimmer`,
+  };
+  
+  const results=document.getElementById('caption-results');
+  const selectedMarkets=markets.length?markets:['GB','US','TR'];
+  results.innerHTML=selectedMarkets.filter(m=>captions[m]).map(m=>`
+    <div style="margin-bottom:10px;padding:11px;background:var(--surface);border-radius:9px;border:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:600;color:var(--muted);margin-bottom:6px">${MARKETS[m]?.flag} ${MARKETS[m]?.name} · ${toneMap[tone]}</div>
+      <div style="font-size:12.5px;line-height:1.6">${captions[m]}</div>
+      <button class="btn btn-s" style="margin-top:8px;font-size:10px" onclick="copyText(\`${captions[m].replace(/`/g,"'")}\`)">📋 Kopyala</button>
+    </div>`).join('');
+  toast('Captionlar üretildi! ✓','success');
+}
+
+function copyText(t){
+  navigator.clipboard.writeText(t).then(()=>toast('Kopyalandı! 📋','success')).catch(()=>toast('Kopyalanamadı','error'));
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+function statusLabel(s){return{active:'Aktif',paused:'Duraklatıldı',scheduled:'Planlandı',draft:'Taslak',published:'Yayınlandı',ended:'Bitti'}[s]||s}
+
+function formatDate(d){
+  try{return new Date(d).toLocaleString('tr-TR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}
+  catch{return d;}
+}
+
+function toggleChip(el,key){el.classList.toggle('on')}
+
+function openModal(id){document.getElementById('modal-'+id).classList.add('open')}
+function closeModal(e,id){if(e.target===e.currentTarget)document.getElementById('modal-'+id).classList.remove('open')}
+
+let toastTimer;
+function toast(msg,type='success'){
+  const t=document.getElementById('toast');
+  const colors={success:'var(--success)',error:'var(--tt)',info:'var(--tt2)'};
+  const icons={success:'✓',error:'✕',info:'ℹ'};
+  t.innerHTML=`<span style="color:${colors[type]};font-size:15px">${icons[type]}</span>${msg}`;
+  t.style.borderLeft=`3px solid ${colors[type]}`;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+updateHeader();render();
+
+// Check due posts every minute
+setInterval(()=>{
+  const now=Date.now();
+  let changed=false;
+  posts.forEach(p=>{
+    if(p.status==='scheduled'&&new Date(p.date).getTime()<=now){
+      p.status='published';changed=true;
+      toast(`"${p.title}" yayınlandı! 🎉`,'success');
+    }
+  });
+  if(changed){save();if(currentPage==='scheduler')renderScheduler();}
+},60000);
+</script>
+</body>
+</html>
